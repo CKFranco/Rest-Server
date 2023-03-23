@@ -1,39 +1,64 @@
 const {response, request} = require('express')
+const User = require('../models/usuario')
+const bcryptjs = require('bcryptjs')
 
-const usersGet = (req = request, res = response) => {
 
-    const {name, lastName, apiKey, id, page = 1, limit = 'no limit'} = req.query
+const usersGet = async (req = request, res = response) => {
+
+    // const {name, lastName, apiKey, id} = req.query
+    const { limit = 5, skip = 5} = req.query
+    const stateQuery = {estado: true}
+    
+    const [users, totalUser] = await Promise.all([
+        User.find(stateQuery).limit(Number(limit)).skip(Number(skip)),
+        User.countDocuments(stateQuery)
+    ])
 
     res.json({
-        msg: 'peticion Get API - from controller',
-        name,
-        lastName,
-        id,
-        page,
-        limit
+        msg: `Total de usuarios: ${totalUser}, Usuarios mostrados ${users.length}`,
+        users
+        // users
     })
 }
 
-const usersPost = (req, res = response) => {
+const usersPost = async(req, res = response) => {
 
-    const {nombre, edad} = req.body
+    const {nombre, correo, password, role} = req.body
+
+    const user = new User({nombre, correo, password, role})
+
+    //ENCRIPTAR LA CONTRASEÑA
+    const salt = bcryptjs.genSaltSync()
+    user.password = bcryptjs.hashSync(password, salt)
+
+    //GUARDAR
+    await user.save()
 
     res.status(201).json({
-
-        msg: 'peticion Post API - from controller',
-        nombre,
-        edad
-
+        msg: 'Usuario creado correctamente',
+        user
     })
 }
 
-const usersPut = (req, res = response) => {
+const usersPut = async (req, res = response) => {
 
     const {id} = req.params
+    const {_id, password, google, ...resto} = req.body 
+
+    // todo: validar contra base de datos
+    if(password){
+
+        //ENCRIPTAR LA CONTRASEÑA
+        const salt = bcryptjs.genSaltSync()
+        resto.password = bcryptjs.hashSync(password, salt)
+
+    }
+
+    const user = await User.findByIdAndUpdate(id, resto)
 
     res.json({
-        msg: 'peticion Put API - from controller',
-        id
+        msg: 'Usuario actualizado correctamente',
+        user
     })
 }
 
@@ -43,9 +68,20 @@ const usersPatch = (req, res = response) => {
     })
 }
 
-const usersDelete = (req, res = response) => {
+const usersDelete = async (req, res = response) => {
+
+    const {id} = req.params
+
+    // Para eliminar registros no recomendado
+    // const deleteUser = await User.findByIdAndDelete(id)
+
+    const disableUser = await User.findByIdAndUpdate(id, {estado: false})
+
+
+
     res.json({
-        msg: 'peticion Delete API - from controller'
+        msg: 'Usuario eliminado correctamente',
+        disableUser
     })
 }
 
