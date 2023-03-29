@@ -72,16 +72,20 @@ const usersDelete = async (req, res = response) => {
 
     const {id} = req.params
 
+    const uid = req.uid
+
     // Para eliminar registros no recomendado
     // const deleteUser = await User.findByIdAndDelete(id)
 
-    const disableUser = await User.findByIdAndUpdate(id, {estado: false})
+    const authentcatedUser = req.authUser
 
-
+    const disabledUser = await User.findByIdAndUpdate(id, {estado: false})
 
     res.json({
         msg: 'Usuario eliminado correctamente',
-        disableUser
+        authentcatedUser,
+        disabledUser,
+        uid
     })
 }
 
