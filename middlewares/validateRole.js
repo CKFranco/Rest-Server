@@ -22,7 +22,7 @@ const isAdminRole = (req = request, res = response ,  next) => {
 
 const isValidRoles = (...roles) => {
 
-    return (req, res = response) => {
+    return (req, res = response, next) => {
 
         if(!req.authUser){
             return res.status(500).json({
